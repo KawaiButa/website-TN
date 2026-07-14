@@ -507,7 +507,7 @@ function App() {
 
 
         <p className="photo-switch-hint">
-          <span>✨</span> Nhấp vào ảnh để xem thêm Thúy An cute xỉu và đáng yêu hơn nữa 🐾
+          <span>✨</span> Nhấp vào ảnh để xem thêm nhe🐾
         </p>
 
         {/* =========================================================================
