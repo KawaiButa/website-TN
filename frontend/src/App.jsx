@@ -76,13 +76,6 @@ function App() {
     if (localData) {
       setRsvps(JSON.parse(localData));
     } else {
-      // Dữ liệu mẫu ban đầu để giao diện trông sinh động hơn
-      const mockData = [
-        { id: 1, name: 'Nguyễn Văn A', attending: true, message: 'Chúc mừng Thúy An nhé! Chúc bạn bay cao bay xa!', created_at: new Date().toISOString() },
-        { id: 2, name: 'Trần Thị B', attending: true, message: 'Mãi đỉnh Thành ơi, nhất định mình sẽ tới!', created_at: new Date().toISOString() }
-      ];
-      setRsvps(mockData);
-      localStorage.setItem('rsvp_backup', JSON.stringify(mockData));
     }
   };
 
@@ -464,22 +457,7 @@ function App() {
 
           {/* Khung ảnh Polaroid chứa hình cá nhân và các ảnh xung quanh */}
           <div className="photo-hub">
-            <div className="thumb">
-              {personalPhotos
-                .map((photo, index) => ({ photo, index }))
-                .filter(({ index }) => index !== currentPhotoIdx)
-                .map(({ photo, index }, idx) => (
-                  <button
-                    key={`${photo}-${index}`}
-                    type="button"
-                    className={`thumb-pos photo-thumb thumb-pos-${idx + 1} ${selectedThumbnail === index ? 'disabled' : ''}`}
-                    onClick={() => handleSelectPhoto(index)}
-                    disabled={isPhotoLoading || index === currentPhotoIdx}
-                  >
-                    <img src={photo} alt={`Xung quanh ${idx + 1}`} />
-                  </button>
-                ))}
-            </div>
+
             <div className="hub-center" onClick={handlePhotoClick}>
               <div className="polaroid-frame">
                 <div className="polaroid-image-container">
@@ -508,6 +486,22 @@ function App() {
                 </div>
               </div>
             </div>
+            <div className="thumb">
+              {personalPhotos
+                .map((photo, index) => ({ photo, index }))
+                .filter(({ index }) => index !== currentPhotoIdx)
+                .map(({ photo, index }, idx) => (
+                  <button
+                    key={`${photo}-${index}`}
+                    type="button"
+                    className={`thumb-pos photo-thumb thumb-pos-${idx + 1} ${selectedThumbnail === index ? 'disabled' : ''}`}
+                    onClick={() => handleSelectPhoto(index)}
+                    disabled={isPhotoLoading || index === currentPhotoIdx}
+                  >
+                    <img src={photo} alt={`Xung quanh ${idx + 1}`} />
+                  </button>
+                ))}
+            </div>
           </div>
         </header>
 
@@ -520,7 +514,7 @@ function App() {
               ĐỒNG HỒ ĐẾM NGƯỢC (COUNTDOWN TIMER)
              ========================================================================= */}
         <div className="countdown-container">
-          <div className="countdown-title">⏳ Đếm ngược tới ngày được gặp anh Thành nò!</div>
+          <div className="countdown-title">⏳ Đếm ngược tới ngày được gặp Thúy An nò!</div>
           <div className="countdown-timer">
             <div className="countdown-item">
               <span className="countdown-number">{timeLeft.days}</span>
@@ -653,7 +647,6 @@ function App() {
                 Sơ đồ Khuôn viên HCMUE
               </h2>
               <p style={{ textAlign: 'left', marginBottom: '5px' }}>
-                Sơ đồ khuôn viên HCMUE:
                 Tòa nhà thư viện sẽ là nơi làm lễ. Sau khi làm lễ xong, mời các bạn di chuyển đến sân M (ngay trước tòa nhà thư viện) để chụp hình cùng mình nha! (Các bạn có thể xem thêm ở sơ đồ để dễ hình dung hơn nhaaaaa)
               </p>
               <div className="campus-map-container">
@@ -791,7 +784,7 @@ function App() {
                     onClick={() => setAttending(true)}
                   >
                     <div className="option-emoji">🥳</div>
-                    <div className="option-title option-title-yes">Mình sẽ đến chụp chung với chị Thúy An nha!!</div>
+                    <div className="option-title option-title-yes">Mình sẽ đến chụp chung với Thúy An nha!!</div>
                     <div className="option-desc">ok iu iu moa moa!</div>
                   </div>
 
@@ -801,7 +794,7 @@ function App() {
                     onClick={() => setAttending(false)}
                   >
                     <div className="option-emoji">😢</div>
-                    <div className="option-title option-title-no">Tui bận mất tiu òi!</div>
+                    <div className="option-title option-title-no">Mình bận mất tiu òi!</div>
                     <div className="option-desc">Thoai không sao, nhưng nhớ gửi quà cho mình sau nhé hẹ hẹ.!</div>
                   </div>
 

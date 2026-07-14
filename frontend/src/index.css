@@ -258,6 +258,77 @@ body {
   height: 100%;
 }
 
+@media (max-width: 768px) {
+  .photo-hub {
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-bottom: 4px;
+  }
+
+  .hub-center {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    z-index: 1;
+  }
+
+  .thumb {
+    position: relative;
+    width: 100%;
+    height: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 6px 2px 10px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(90, 159, 255, 0.45) transparent;
+  }
+
+  .thumb::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .thumb::-webkit-scrollbar-thumb {
+    background: rgba(90, 159, 255, 0.45);
+    border-radius: 999px;
+  }
+
+  .thumb-pos {
+    position: relative;
+    inset: auto;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    flex: 0 0 auto;
+    width: 92px;
+    height: 92px;
+    scroll-snap-align: start;
+  }
+
+  .thumb-pos-1,
+  .thumb-pos-2,
+  .thumb-pos-3,
+  .thumb-pos-4,
+  .thumb-pos-5,
+  .thumb-pos-6 {
+    top: auto;
+  }
+
+  .photo-thumb {
+    width: 92px;
+    height: 92px;
+    border-radius: 20px;
+  }
+}
+
 /* 1. Reset and align all ODD numbers to the RIGHT */
 .thumb-pos:nth-child(odd) {
   right: 0%;
@@ -1232,7 +1303,7 @@ footer {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: linear-gradient(135deg, var(--sky-blue-soft) 0%, #bce9ff 50%, #e0f6ff 100%);
+  background: linear-gradient(135deg, #ffe7f4 0%, #e9f6ff 45%, #fff4d8 100%);
   z-index: 10000; /* Extremely high z-index to overlay everything */
   display: flex;
   justify-content: center;
@@ -1253,7 +1324,7 @@ footer {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: radial-gradient(rgba(0, 159, 227, 0.08) 1.5px, transparent 1.5px);
+  background-image: radial-gradient(rgba(255, 110, 170, 0.16) 1.5px, transparent 1.5px);
   background-size: 16px 16px;
   pointer-events: none;
   z-index: 2;
@@ -1294,14 +1365,14 @@ footer {
   max-width: 680px;
   width: 90%;
   padding: 40px 30px;
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 4px solid #e0f6ff;
+  border: 4px solid #f8cfe2;
   border-radius: 28px;
   text-align: center;
-  box-shadow: 0 20px 45px rgba(0, 159, 227, 0.15), 
-              inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  box-shadow: 0 20px 45px rgba(255, 128, 171, 0.18),
+              inset 0 1px 0 rgba(255, 255, 255, 0.7);
   z-index: 10;
   display: flex;
   flex-direction: column;
@@ -1344,7 +1415,7 @@ footer {
   display: inline-block;
   width: 2px;
   height: 1.25rem;
-  background-color: var(--sky-blue-deep);
+  background-color: #5da9ff;
   margin-left: 3px;
   animation: introCursorBlink 0.9s infinite;
   vertical-align: middle;
@@ -1360,7 +1431,7 @@ footer {
   font-family: var(--font-display);
   font-size: 1rem;
   font-weight: 700;
-  color: var(--grass-green-dark);
+  color: #d85f92;
   letter-spacing: 2px;
   text-transform: uppercase;
   margin-top: 15px;
