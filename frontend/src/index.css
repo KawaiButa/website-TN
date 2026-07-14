@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Dancing+Script:wght@500;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Quicksand:wght@500;700&display=swap');
 
 :root {
+  color-scheme: light;
   --sky-blue-deep: #5a9fff;
   --sky-blue-mid: #8fc7ff;
   --sky-blue-light: #cfe8ff;
@@ -30,6 +31,13 @@
 
 html {
   scroll-behavior: smooth;
+  color-scheme: light;
+}
+
+body,
+#root {
+  color-scheme: light;
+  background-color: #fff8fc;
 }
 
 body {
@@ -39,6 +47,60 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   line-height: 1.6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: light;
+  }
+
+  html,
+  body,
+  #root,
+  .sky-bg,
+  .container,
+  .intro-overlay,
+  .intro-card,
+  .thanks-overlay,
+  .thanks-card,
+  .section-card,
+  .detail-item,
+  .map-iframe-container,
+  .parking-step-item,
+  .form-input,
+  .rsvp-option-card,
+  .guest-card,
+  .contact-link-card,
+  .admin-login-card,
+  .polaroid-frame {
+    color: var(--dark-text) !important;
+    background-color: #fff8fc !important;
+    background-image: none !important;
+  }
+
+  .sky-bg {
+    background: linear-gradient(180deg, #ffc7de 0%, #ffe6f0 28%, #f6f8ff 70%, #ffffff 100%) !important;
+  }
+
+  .intro-overlay {
+    background: linear-gradient(135deg, #ffe7f4 0%, #e9f6ff 45%, #fff4d8 100%) !important;
+  }
+
+  .form-input,
+  .rsvp-option-card,
+  .guest-card,
+  .contact-link-card,
+  .admin-login-card,
+  .detail-item,
+  .parking-step-item,
+  .section-card {
+    border-color: #ffe2ec !important;
+    box-shadow: none !important;
+  }
+
+  .form-input::placeholder {
+    color: #8e809c !important;
+  }
 }
 
 /* Background layers */
@@ -287,17 +349,12 @@ body {
     overflow-y: hidden;
     padding: 6px 2px 10px;
     scroll-snap-type: x mandatory;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(90, 159, 255, 0.45) transparent;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
 
   .thumb::-webkit-scrollbar {
-    height: 6px;
-  }
-
-  .thumb::-webkit-scrollbar-thumb {
-    background: rgba(90, 159, 255, 0.45);
-    border-radius: 999px;
+    display: none;
   }
 
   .thumb-pos {
@@ -1404,7 +1461,7 @@ footer {
     gap: 20px;
   }
   .intro-quote {
-    font-size: 1.05rem;
+    font-size: 0.75rem;
     line-height: 1.8;
     text-align: center;
   }
