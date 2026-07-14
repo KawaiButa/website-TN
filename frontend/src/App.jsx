@@ -107,7 +107,7 @@ function App() {
     setIntroStars(starsArray);
 
     // --- HIỆU ỨNG ĐÁNH CHỮ INTRO ---
-    const fullText = "Thân gửi những người tôi yêu,\nNếu bạn đọc được những dòng tin nhắn này, thì bạn chính là một trong những người quan trọng nhất đối với Thúy An. Xin được gửi lời cảm ơn sâu sắc đến bạn - người đã đồng hành cùng An trong suốt quãng đời sinh viên đầy trọn vẹn và ý nghĩa.\nCảm ơn bạn đã luôn ở bên, cùng An đi qua những ngày tháng chông chênh của tuổi trẻ, những đêm thức muộn ngập trong bài vở, áp lực thi cử và cả những lo lắng về tương lai. Hành trình này của An có thể chưa bao giờ hoàn hảo, nhưng nhờ có sự bao dung và tình cảm của bạn mà trở nên rực rỡ và đáng nhớ hơn bao giờ hết. Giờ đây, hãy để Thúy An được ghi lại những kỷ niệm đáng quý này bằng những tấm hình chụp mang đầy màu sắc với bạn trong buổi lễ tốt nghiệp thiêng liêng ấy.\nCảm ơn vì đã là một phần thanh xuân tuyệt vời của tôi!";
+    const fullText = "Hello bạn, là Thúy An đây, ​Xin gửi lời cảm ơn sâu sắc nhất đến bạn – người đã cùng mình đi qua những năm tháng sinh viên quý giá nhất. Hành trình này của mình có thể chưa hoàn hảo, nhưng có sự đồng hành và tình cảm của bạn chính là điều làm nên một thanh xuân rực rỡ. Trong buổi lễ tốt nghiệp thiêng liêng này, hãy để Thúy An được cùng bạn lưu giữ những kỷ niệm đáng quý qua những bức hình thật đẹp nhé! ​Cảm ơn vì đã là một phần thanh xuân tuyệt vời của mình nhé!";
     let currentIdx = 0;
     typingIntervalRef.current = setInterval(() => {
       if (currentIdx < fullText.length) {
@@ -184,7 +184,7 @@ function App() {
 
   // --- XỬ LÝ CLICK TRÊN MÀN HÌNH INTRO ---
   const handleIntroClick = () => {
-    const fullText = "Thân gửi những người tôi yêu,\nXin được gửi lời cảm ơn sâu sắc đến bạn - người đã đồng hành cùng An trong suốt quãng đời sinh viên đầy trọn vẹn và ý nghĩa. Cảm ơn bạn đã luôn ở bên, cùng An đi qua những ngày tháng chông chênh của tuổi trẻ, những đêm thức muộn ngập trong bài vở, áp lực thi cử và cả những lo lắng về tương lai. Hành trình này của An có thể chưa bao giờ hoàn hảo, nhưng nhờ có sự bao dung và tình cảm của bạn mà trở nên rực rỡ và đáng nhớ hơn bao giờ hết. Giờ đây, hãy để Thúy An được ghi lại những kỷ niệm đáng quý này bằng những tấm hình chụp mang đầy màu sắc với bạn trong buổi lễ tốt nghiệp thiêng liêng ấy.\nCảm ơn vì đã là một phần thanh xuân tuyệt vời của tôi!";
+    const fullText = "Hello bạn, là Thúy An đây, ​Xin gửi lời cảm ơn sâu sắc nhất đến bạn – người đã cùng mình đi qua những năm tháng sinh viên quý giá nhất. Hành trình này của mình có thể chưa hoàn hảo, nhưng có sự đồng hành và tình cảm của bạn chính là điều làm nên một thanh xuân rực rỡ. Trong buổi lễ tốt nghiệp thiêng liêng này, hãy để Thúy An được cùng bạn lưu giữ những kỷ niệm đáng quý qua những bức hình thật đẹp nhé! ​Cảm ơn vì đã là một phần thanh xuân tuyệt vời của mình nhé!";
 
     if (introText.length < fullText.length) {
       // Nhấp lần đầu: Hiển thị toàn bộ chữ ngay lập tức
@@ -361,7 +361,7 @@ function App() {
           <div className="intro-card" onClick={(e) => e.stopPropagation()}>
             <p className="intro-quote">
               {introText}
-              {introText.length < "Thân gửi những người tôi yêu,\nNếu bạn đọc được những dòng tin nhắn này, thì bạn chính là một trong những người quan trọng nhất đối với Thúy An. Xin được gửi lời cảm ơn sâu sắc đến bạn - người đã đồng hành cùng An trong suốt quãng đời sinh viên đầy trọn vẹn và ý nghĩa.\nCảm ơn bạn đã luôn ở bên, cùng An đi qua những ngày tháng chông chênh của tuổi trẻ, những đêm thức muộn ngập trong bài vở, áp lực thi cử và cả những lo lắng về tương lai. Hành trình này của An có thể chưa bao giờ hoàn hảo, nhưng nhờ có sự bao dung và tình cảm của bạn mà trở nên rực rỡ và đáng nhớ hơn bao giờ hết. Giờ đây, hãy để Thúy An được ghi lại những kỷ niệm đáng quý này bằng những tấm hình chụp mang đầy màu sắc với bạn trong buổi lễ tốt nghiệp thiêng liêng ấy.\nCảm ơn vì đã là một phần thanh xuân tuyệt vời của tôi!".length && (
+              {introText.length < "Hello bạn, là Thúy An đây, ​Xin gửi lời cảm ơn sâu sắc nhất đến bạn – người đã cùng mình đi qua những năm tháng sinh viên quý giá nhất. Hành trình này của mình có thể chưa hoàn hảo, nhưng có sự đồng hành và tình cảm của bạn chính là điều làm nên một thanh xuân rực rỡ. Trong buổi lễ tốt nghiệp thiêng liêng này, hãy để Thúy An được cùng bạn lưu giữ những kỷ niệm đáng quý qua những bức hình thật đẹp nhé! ​Cảm ơn vì đã là một phần thanh xuân tuyệt vời của mình nhé!".length && (
                 <span className="intro-cursor"></span>
               )}
             </p>
