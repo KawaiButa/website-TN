@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { supabase } from './supabase';
+import { supabase, adminPassword } from './supabase';
 
 
 function App() {
@@ -9,7 +9,7 @@ function App() {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rsvps, setRsvps] = useState([]);
-  const [toast, setToast] = useState({ show: false, message: '' });
+  const [thanksState, setThanksState] = useState({ show: false, message: '' });
   const [confetti, setConfetti] = useState([]);
   const [sparkleEffects, setSparkleEffects] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -31,6 +31,11 @@ function App() {
   // --- STATE CHO NHẠC NỀN ---
   const [isPlaying, setIsPlaying] = useState(false);
 
+  // --- STATE CHO ADMIN LOGIN ---
+  const [adminPasswordInput, setAdminPasswordInput] = useState('');
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [adminLoginError, setAdminLoginError] = useState('');
+
 
   // =========================================================================
   // 1. CHỈNH SỬA: ĐƯỜNG DẪN ẢNH CỦA BẢN THÂN
@@ -44,6 +49,7 @@ function App() {
     '/d.jpg',
     '/e.jpg',
     '/f.jpg',
+    '/g.jpg',
   ];
   const [currentPhotoIdx, setCurrentPhotoIdx] = useState(0);
 
@@ -87,6 +93,10 @@ function App() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('admin') === 'true') {
       setIsAdmin(true);
+      const savedAuth = window.localStorage.getItem('admin-auth');
+      if (savedAuth === 'true') {
+        setIsAdminAuthenticated(true);
+      }
     }
 
     // --- KHỞI TẠO VẬT THỂ BAY NỀN INTRO ---
@@ -104,7 +114,7 @@ function App() {
     setIntroStars(starsArray);
 
     // --- HIỆU ỨNG ĐÁNH CHỮ INTRO ---
-    const fullText = "Thân gửi những người tôi yêu,\nNếu bạn đọc được những dòng tin nhắn này, thì bạn chính là một trong những người quan trọng nhất đối với Thúy An. Xin được gửi lời cảm ơn sâu sắc đến bạn – người đã đồng hành cùng Thúy An trong suốt quãng đời sinh viên đầy trọn vẹn và ý nghĩa. Giờ đây, hãy để Thúy An được ghi lại những kỷ niệm đáng quý này bằng những tấm hình chụp mang đầy màu sắc với bạn trong buổi lễ tốt nghiệp thiêng liêng ấy. Rồi chúng ta sẽ có dịp gặp lại vào những ngày không xa…. Cảm ơn người đã thức cùng tôi!";
+    const fullText = "Thân gửi những người tôi yêu,\nNếu bạn đọc được những dòng tin nhắn này, thì bạn chính là một trong những người quan trọng nhất đối với Thúy An. Xin được gửi lời cảm ơn sâu sắc đến bạn - người đã đồng hành cùng An trong suốt quãng đời sinh viên đầy trọn vẹn và ý nghĩa.\nCảm ơn bạn đã luôn ở bên, cùng An đi qua những ngày tháng chông chênh của tuổi trẻ, những đêm thức muộn ngập trong bài vở, áp lực thi cử và cả những lo lắng về tương lai. Hành trình này của An có thể chưa bao giờ hoàn hảo, nhưng nhờ có sự bao dung và tình cảm của bạn mà trở nên rực rỡ và đáng nhớ hơn bao giờ hết. Giờ đây, hãy để Thúy An được ghi lại những kỷ niệm đáng quý này bằng những tấm hình chụp mang đầy màu sắc với bạn trong buổi lễ tốt nghiệp thiêng liêng ấy.\nCảm ơn vì đã là một phần thanh xuân tuyệt vời của tôi!";
     let currentIdx = 0;
     typingIntervalRef.current = setInterval(() => {
       if (currentIdx < fullText.length) {
@@ -220,9 +230,15 @@ function App() {
   };
 
   // --- HIỆU ỨNG TẠO SAO LẤP LÁNH KHI CLICK CHUỘT LÊN ẢNH ---
+  const [selectedThumbnail, setSelectedThumbnail] = useState(null);
+  const [isPhotoLoading, setIsPhotoLoading] = useState(false);
+
   const handlePhotoClick = (e) => {
-    // Đổi ảnh
-    setCurrentPhotoIdx((prev) => (prev + 1) % personalPhotos.length);
+    if (isPhotoLoading) return;
+    const nextIndex = (currentPhotoIdx + 1) % personalPhotos.length;
+    setSelectedThumbnail(nextIndex);
+    setIsPhotoLoading(true);
+    setCurrentPhotoIdx(nextIndex);
 
     // Tạo hiệu ứng lấp lánh tại vị trí click
     const rect = e.currentTarget.getBoundingClientRect();
@@ -239,6 +255,19 @@ function App() {
     setTimeout(() => {
       setSparkleEffects((prev) => prev.filter(s => s.id !== newSparkle.id));
     }, 1500);
+  };
+
+  const handleSelectPhoto = (index) => {
+    console.log("Selected photo index: %d", index);
+    if (isPhotoLoading || index === currentPhotoIdx) return;
+    setSelectedThumbnail(index);
+    setIsPhotoLoading(true);
+    setCurrentPhotoIdx(index);
+  };
+
+  const handleCenterImageLoad = () => {
+    setIsPhotoLoading(false);
+    setSelectedThumbnail(null);
   };
 
   // --- XỬ LÝ GỬI FORM RSVP LÊN SUPABASE ---
@@ -265,7 +294,7 @@ function App() {
         const savedRSVP = data[0];
         // Cập nhật state danh sách
         setRsvps((prev) => [savedRSVP, ...prev]);
-        showToast('🎉 Thúy An nhận thông tin nhóaaa');
+        showThanks('💌 Cảm ơn bạn đã gửi thông tin cho Thúy An!');
         triggerConfetti();
         // Reset form
         setName('');
@@ -285,7 +314,7 @@ function App() {
       setRsvps(updatedRsvps);
       localStorage.setItem('rsvp_backup', JSON.stringify(updatedRsvps));
 
-      showToast('🎉 Đã ghi nhận lời mời (Chế độ Offline/Demo)!');
+      showThanks('💌 Đã ghi nhận lời mời của bạn (Chế độ Offline/Demo)');
       triggerConfetti();
       setName('');
       setMessage('');
@@ -294,9 +323,20 @@ function App() {
     }
   };
 
-  const showToast = (msg) => {
-    setToast({ show: true, message: msg });
-    setTimeout(() => setToast({ show: false, message: '' }), 4000);
+  const handleAdminLogin = (e) => {
+    e.preventDefault();
+    if (adminPasswordInput === adminPassword) {
+      setIsAdminAuthenticated(true);
+      setAdminLoginError('');
+      window.localStorage.setItem('admin-auth', 'true');
+      setThanksState({ show: true, message: '🔐 Đã vào khu vực quản trị' });
+    } else {
+      setAdminLoginError('Mật khẩu không đúng, thử lại nha 🐾');
+    }
+  };
+
+  const showThanks = (msg) => {
+    setThanksState({ show: true, message: msg });
   };
 
   return (
@@ -396,10 +436,17 @@ function App() {
         </div>
       )}
 
-      {/* Thông báo Toast xinh xắn */}
-      <div className={`toast-alert ${toast.show ? 'show' : ''}`}>
-        <span>{toast.message}</span>
-      </div>
+      {/* Thông báo cảm ơn dạng card lớn */}
+      {thanksState.show && (
+        <div className="thanks-overlay" onClick={() => setThanksState({ show: false, message: '' })}>
+          <div className="thanks-card" onClick={(e) => e.stopPropagation()}>
+            <div className="thanks-emoji">💖</div>
+            <h3>Thank you, sweetheart!</h3>
+            <p>{thanksState.message}</p>
+            <button className="thanks-close" onClick={() => setThanksState({ show: false, message: '' })}>Đóng</button>
+          </div>
+        </div>
+      )}
 
       {/* NỘI DUNG CHÍNH WEBSITE */}
       <div className="container">
@@ -408,49 +455,65 @@ function App() {
             MỤC 1: HERO SECTION & ẢNH CÁ NHÂN (POLAROID)
            ========================================== */}
         <header style={{ textAlign: 'center', position: 'relative' }}>
+          <div className="paw-decor paw-top">🐾</div>
+          <div className="kitty-badge">🐱</div>
           {/* Nhãn "LỄ TỐT NGHIỆP" dễ thương */}
           <div className="capsule-badge">
             LỄ TỐT NGHIỆP
           </div>
 
-          {/* Khung ảnh Polaroid chứa hình cá nhân */}
-          <div className="polaroid-frame" onClick={handlePhotoClick}>
-            {/* Sao lấp lánh viền quanh khung ảnh */}
-            <svg className="sparkle sparkle-1" viewBox="0 0 24 24"><path fill="currentColor" d="M12,2L14.7,8.7L22,10L16.2,14.7L18.2,22L12,18L5.8,22L7.8,14.7L2,10L9.3,8.7L12,2Z" /></svg>
-            <svg className="sparkle sparkle-2" viewBox="0 0 24 24"><path fill="currentColor" d="M12,2L14.7,8.7L22,10L16.2,14.7L18.2,22L12,18L5.8,22L7.8,14.7L2,10L9.3,8.7L12,2Z" /></svg>
-            <svg className="sparkle sparkle-3" viewBox="0 0 24 24"><path fill="currentColor" d="M12,2L14.7,8.7L22,10L16.2,14.7L18.2,22L12,18L5.8,22L7.8,14.7L2,10L9.3,8.7L12,2Z" /></svg>
-
-            <div className="polaroid-image-container">
-              <img
-                src={personalPhotos[currentPhotoIdx]}
-                alt="Thúy An Graduation"
-                className="polaroid-image"
-              />
-
-              {/* Click sparkle effect render */}
-              {sparkleEffects.map((s) => (
-                <div
-                  key={s.id}
-                  className="sparkle-fly"
-                  style={{ left: s.x, top: s.y }}
-                >
-                  <svg width="24" height="24" viewBox="0 0 24 24" style={{ color: '#ffd700' }}>
-                    <path fill="currentColor" d="M12,2L14.7,8.7L22,10L16.2,14.7L18.2,22L12,18L5.8,22L7.8,14.7L2,10L9.3,8.7L12,2Z" />
-                  </svg>
-                </div>
-              ))}
+          {/* Khung ảnh Polaroid chứa hình cá nhân và các ảnh xung quanh */}
+          <div className="photo-hub">
+            <div className="thumb">
+              {personalPhotos
+                .map((photo, index) => ({ photo, index }))
+                .filter(({ index }) => index !== currentPhotoIdx)
+                .map(({ photo, index }, idx) => (
+                  <button
+                    key={`${photo}-${index}`}
+                    type="button"
+                    className={`thumb-pos photo-thumb thumb-pos-${idx + 1} ${selectedThumbnail === index ? 'disabled' : ''}`}
+                    onClick={() => handleSelectPhoto(index)}
+                    disabled={isPhotoLoading || index === currentPhotoIdx}
+                  >
+                    <img src={photo} alt={`Xung quanh ${idx + 1}`} />
+                  </button>
+                ))}
             </div>
+            <div className="hub-center" onClick={handlePhotoClick}>
+              <div className="polaroid-frame">
+                <div className="polaroid-image-container">
+                  <img
+                    src={personalPhotos[currentPhotoIdx]}
+                    alt="Thúy An Graduation"
+                    className="polaroid-image"
+                    onLoad={handleCenterImageLoad}
+                  />
 
-            {/* Tên hiển thị kiểu chữ dễ thương viền trắng */}
-            <div className="polaroid-caption">
-              THÚY AN
+                  {/* Click sparkle effect render */}
+                  {sparkleEffects.map((s) => (
+                    <div
+                      key={s.id}
+                      className="sparkle-fly"
+                      style={{ left: s.x, top: s.y }}
+                    >
+                      <svg width="24" height="24" viewBox="0 0 24 24" style={{ color: '#ffd700' }}>
+                        <path fill="currentColor" d="M12,2L14.7,8.7L22,10L16.2,14.7L18.2,22L12,18L5.8,22L7.8,14.7L2,10L9.3,8.7L12,2Z" />
+                      </svg>
+                    </div>
+                  ))}
+                </div>
+                <div className="polaroid-caption">
+                  THÚY AN
+                </div>
+              </div>
             </div>
           </div>
         </header>
 
 
         <p className="photo-switch-hint">
-          <span>✨</span> Nhấp vào ảnh để xem thêm Thúy An đẹp gai như nào nhóa!
+          <span>✨</span> Nhấp vào ảnh để xem thêm Thúy An cute xỉu và đáng yêu hơn nữa 🐾
         </p>
 
         {/* =========================================================================
@@ -482,354 +545,350 @@ function App() {
         </div>
 
 
-        {/* =========================================================================
-              CHỈNH SỬA: LỜI MỞ ĐẦU VÀ GIỚI THIỆU BẢN THÂN
-              Bạn có thể thay đổi câu chữ chào mừng dưới đây
-             ========================================================================= */}
-        <div className="section-card" style={{ marginTop: '25px', textAlign: 'center' }}>
-          <p style={{ fontSize: '1.25rem', fontWeight: '600', color: '#2c3e50', lineHeight: '1.8', textAlign: 'center' }}>
-            Thân mời bạn đến chung vui trong ngày tốt nghiệp của
+        <div className="bento-grid">
+          <div className="section-card bento-hero" style={{ marginTop: '25px', textAlign: 'center' }}>
+            <p style={{ fontSize: '1.25rem', fontWeight: '600', color: '#2c3e50', lineHeight: '1.8', textAlign: 'center' }}>
+              Thân mời bạn đến chung vui trong ngày tốt nghiệp của
 
-            <strong style={{
-              display: 'block',
-              color: 'var(--grass-green-dark)',
-              fontSize: '1.6rem',
-              fontFamily: 'var(--font-display)',
-              marginTop: '0.5rem',
-              marginBottom: '0.2rem'
-            }}>
-              THÚY AN aka Nauyth
-            </strong>
+              <strong style={{
+                display: 'block',
+                color: 'var(--pink-deep)',
+                fontSize: '1.6rem',
+                fontFamily: 'var(--font-display)',
+                marginTop: '0.5rem',
+                marginBottom: '0.2rem'
+              }}>
+                THÚY AN aka Nauyth
+              </strong>
 
-            <span style={{ display: 'block', fontSize: '1.2rem', fontWeight: '500' }}>
-              Cử nhân ngành Sư phạm Lịch sử  - Địa lý
-            </span>
-          </p>
-          <p style={{ fontSize: '1.05rem', color: 'var(--light-text)', marginTop: '10px' }}>
-            Được chụp cùng bạn một bức hình (và nhận quà của bạn) là niềm vui mà mình luôn hằng ao ước.
-          </p>
-        </div>
+              <span style={{ display: 'block', fontSize: '1.2rem', fontWeight: '500' }}>
+                Cử nhân ngành Sư phạm Lịch sử  - Địa lý
+              </span>
+            </p>
+            <p style={{ fontSize: '1.05rem', color: 'var(--light-text)', marginTop: '10px' }}>
+              Được chụp cùng bạn một bức hình (và nhận quà của bạn) là niềm vui mà mình luôn hằng ao ước.
+            </p>
+          </div>
 
+          <div className="section-card bento-time" id="thoi-gian">
+            <h2 className="section-title">
+              {/* Icon Lịch */}
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              Thời gian & Địa điểm
+            </h2>
 
-        {/* =========================================================================
-              MỤC 2: THỜI GIAN VÀ ĐỊA ĐIỂM (CÓ THỂ TỰ THÊM NỘI DUNG CHI TIẾT TẠI ĐÂY)
-             ========================================================================= */}
-        <div className="section-card" id="thoi-gian">
-          <h2 className="section-title">
-            {/* Icon Lịch */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-            Thời gian & Địa điểm
-          </h2>
-
-          <div className="datetime-container">
-            {/* =========================================================================
+            <div className="datetime-container">
+              {/* =========================================================================
                   CHỈNH SỬA: CHI TIẾT THỜI GIAN LỄ TỐT NGHIỆP
                   Sửa ngày, giờ ở phần detail-value bên dưới
                  ========================================================================= */}
-            <div className="detail-item">
-              <div className="detail-icon">📅</div>
-              <div className="detail-label">Thời gian</div>
-              <div className="detail-value">14h00 - 16h30</div>
-              <div className="detail-value">Thứ năm, 23/07/2026</div>
-              <div className="detail-subvalue">(Có thể sẽ trễ hơn dự kiến nếu trường không thả mình ra sớm nhé)</div>
-            </div>
+              <div className="detail-item">
+                <div className="detail-icon">📅</div>
+                <div className="detail-label">Thời gian</div>
+                <div className="detail-value">14h00 - 16h30</div>
+                <div className="detail-value">Thứ năm, 23/07/2026</div>
+                <div className="detail-subvalue">(Có thể sẽ trễ hơn dự kiến nếu trường không thả mình ra sớm nhé)</div>
+              </div>
 
-            {/* =========================================================================
+              {/* =========================================================================
                   CHỈNH SỬA: CHI TIẾT ĐỊA ĐIỂM TỔ CHỨC
                   Sửa tên giảng đường, trường học ở bên dưới
                  ========================================================================= */}
-            <div className="detail-item">
-              <div className="detail-icon">🎓</div>
-              <div className="detail-label">Địa điểm</div>
-              <div className="detail-value">Sân M </div>
-              <div className="detail-value">Trường Đại học Sư phạm Thành phố Hồ Chí Minh - HCMUE</div>
+              <div className="detail-item">
+                <div className="detail-icon">🎓</div>
+                <div className="detail-label">Địa điểm</div>
+                <div className="detail-value">Sân M </div>
+                <div className="detail-value">Trường Đại học Sư phạm Thành phố Hồ Chí Minh - HCMUE</div>
+              </div>
             </div>
           </div>
-        </div>
 
+          <div className="section-card bento-map" id="ban-do">
+            <h2 className="section-title">
+              {/* Icon Ghim bản đồ */}
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              Bản đồ Đường đi
+            </h2>
 
-        {/* =========================================================================
-              MỤC 3: ĐỊA ĐIỂM BẢN ĐỒ CHI TIẾT VÀ LINK GOOGLE MAPS
-             ========================================================================= */}
-        <div className="section-card" id="ban-do">
-          <h2 className="section-title">
-            {/* Icon Ghim bản đồ */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-            Bản đồ Đường đi
-          </h2>
-
-          {/* =========================================================================
+            {/* =========================================================================
                 CHỈNH SỬA: NỘI DUNG MÔ TẢ ĐỊA ĐIỂM
                ========================================================================= */}
-          <p style={{ textAlign: 'left', marginBottom: '10px' }}>
-            📍 <strong>Trường Đại học Sư phạm Thành phố Hồ Chí Minh</strong>: 280 An Dương Vương, phường Chợ Quán, Thành phố Hồ Chí Minh, Việt Nam
-          </p>
-          <p style={{ textAlign: 'left', fontSize: '0.95rem', color: 'var(--light-text)' }}>
-            Ráng chạy theo ggm nhé chứ cái này mình khó mà chỉ....
-          </p>
+            <p style={{ textAlign: 'left', marginBottom: '10px' }}>
+              📍 <strong>Trường Đại học Sư phạm Thành phố Hồ Chí Minh</strong>: 280 An Dương Vương, phường Chợ Quán, Thành phố Hồ Chí Minh, Việt Nam
+            </p>
+            <p style={{ textAlign: 'left', fontSize: '0.95rem', color: 'var(--light-text)' }}>
+              Ráng chạy theo ggm nhé chứ cái này mình khó mà chỉ....
+            </p>
 
-          {/* BẢN ĐỒ GOOGLE MAPS NHÚNG (Bản đồ thực tế của UIT) */}
-          <div className="map-iframe-container">
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d440.6091024707942!2d106.6816096337353!3d10.76212010915725!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1svi!2s!4v1784043028689!5m2!1svi!2s"
-              allowFullScreen=""
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              title="Bản đồ HCMUE"
-            ></iframe>
-          </div>
+            {/* BẢN ĐỒ GOOGLE MAPS NHÚNG (Bản đồ thực tế của UIT) */}
+            <div className="map-iframe-container">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d440.6091024707942!2d106.6816096337353!3d10.76212010915725!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1svi!2s!4v1784043028689!5m2!1svi!2s"
+                allowFullScreen=""
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Bản đồ HCMUE"
+              ></iframe>
+            </div>
 
-          {/* =========================================================================
+            {/* =========================================================================
                 CHỈNH SỬA: LINK LIÊN KẾT GOOGLE MAPS (Nút mở trên điện thoại)
                 Thay thuộc tính href bằng link Google Maps của bạn nếu cần
                ========================================================================= */}
-          <a
-            href="https://maps.app.goo.gl/kXRjjmeCvNZV8CaY8"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="map-button-link"
-          >
-            <span>🗺️</span> Chỉ đường trên Google Maps
-          </a>
-        </div>
-
-        {/* =========================================================================
-              MỤC 3B: SƠ ĐỒ KHUÔN VIÊN TRƯỜNG (CAMPUS MAP)
-             ========================================================================= */}
-        <div className="section-card" id="ban-do-khuon-vien">
-          <h2 className="section-title">
-            {/* Icon Sơ đồ */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="18"></line><line x1="15" y1="6" x2="15" y2="21"></line></svg>
-            Sơ đồ Khuôn viên HCMUE
-          </h2>
-          <p style={{ textAlign: 'left', marginBottom: '5px' }}>
-            Sơ đồ khuôn viên HCMUE:
-            Tòa nhà thư viện sẽ là nơi làm lễ. Sau khi làm lễ xong, mời các bạn di chuyển đến sân M (ngay trước tòa nhà thư viện) để chụp hình cùng mình nha! (Các bạn có thể xem thêm ở sơ đồ để dễ hình dung hơn nhaaaaa)
-          </p>
-          <div className="campus-map-container">
-            <img
-              src="/dichuyen.jpg"
-              alt="Sơ đồ khuôn viên HCMUE"
-              className="campus-map-img"
-            />
-          </div>
-        </div>
-
-
-
-        {/* =========================================================================
-              MỤC 4: HƯỚNG DẪN GỬI XE (CÓ THỂ TỰ CHỈNH SỬA NỘI DUNG CHI TIẾT TẠI ĐÂY)
-             ========================================================================= */}
-        <div className="section-card" id="gui-xe">
-          <h2 className="section-title">
-            {/* Icon Xe hơi/Xe máy */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2" ry="2"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
-            Hướng dẫn gửi xe
-          </h2>
-          <div className="campus-map-container" style={{ marginBottom: '15px' }}>
-            <img
-              src="/guixe.jpg"
-              alt="Sơ đồ khuôn viên HCMUE"
-              className="campus-map-img"
-            />
-          </div>
-          {/* =========================================================================
-                CHỈNH SỬA: CÁC BƯỚC HƯỚNG DẪN GỬI XE
-                Thay đổi hoặc thêm bớt các bước bên dưới tùy tình hình thực tế
-               ========================================================================= */}
-          <ul className="parking-steps">
-            <li className="parking-step-item">
-              <div className="parking-step-num">1</div>
-              <div className="parking-step-text">
-                <strong>Bãi gửi xe:</strong> Nếu bạn đi từ Cổng chính (Đường An Dương Vương), hãy rẽ trái chạy men theo đường nội bộ phía trước nhà A. Nếu đi từ Cổng phụ phía bên trái, bạn chỉ cần chạy thẳng vào đường nội bộ. Bãi xe gắn máy nằm ngay bên tay phải của bạn.
-              </div>
-            </li>
-            <li className="parking-step-item">
-              <div className="parking-step-num">2</div>
-              <div className="parking-step-text">
-                <strong>Lấy thẻ xe:</strong> Tại lối vào bãi xe, dù bạn là sinh viên trong trường hay khách ngoài trường thì đều cần dừng lại để lấy thẻ xe từ các bác bảo vệ nhé.
-              </div>
-            </li>
-            <li className="parking-step-item">
-              <div className="parking-step-num">3</div>
-              <div className="parking-step-text">
-                <strong>Chi phí gửi xe:</strong> Chi phí gửi xe sẽ dao động từ 3k đến 6k tùy thuộc vào khung giờ và đối tượng. Bạn nên chuẩn bị sẵn một ít tiền lẻ để lúc lấy xe ra về được thuận tiện và nhanh chóng hơn.
-              </div>
-            </li>
-            <li className="parking-step-item">
-              <div className="parking-step-num">4</div>
-              <div className="parking-step-text">
-                <strong>Lưu ý:</strong> Sau khi gửi xe xong, bạn đi bộ ra phía sau để đến khu vực làm lễ hoặc check-in trước. Hãy nhắn tin hoặc gọi điện liền cho An để mình biết và ra đón bạn nếu mình đã làm lễ xong nhé!.
-              </div>
-            </li>
-          </ul>
-        </div>
-
-
-        {/* ==========================================
-              MỤC 5: XÁC NHẬN THAM DỰ (RSVP FORM)
-             ========================================== */}
-        <div className="section-card" id="xac-nhan">
-          <h2 className="section-title">
-            {/* Icon Thư xác nhận */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-            Xác nhận tham dự
-          </h2>
-
-          <p style={{ textAlign: 'left', marginBottom: '20px', color: 'var(--light-text)' }}>
-            Hãy phản hồi giúp mình trước ngày <strong>22h00 22/07/2026</strong> để mình chuẩn bị đón tiếp chu đáo nhất nhé!
-          </p>
-
-          <form onSubmit={handleSubmitRSVP} className="rsvp-form-container">
-            {/* Nhập Họ và tên */}
-            <div className="form-group">
-              <label htmlFor="guest-name" className="form-label">Cho mình xin bí danh nha! (viết sao cho mình biết là ai á...)*</label>
-              <input
-                type="text"
-                id="guest-name"
-                className="form-input"
-                placeholder="Nhập họ và tên của bạn..."
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-
-            {/* Câu hỏi lựa chọn Có/Không */}
-            <div className="form-group">
-              <label className="form-label">Bạn sẽ đến và chụp cùng mình tấm ảnh chứ?</label>
-              <div className="rsvp-options-grid">
-
-                {/* Lựa chọn CÓ tham gia */}
-                <div
-                  className={`rsvp-option-card ${attending ? 'selected-yes' : ''}`}
-                  onClick={() => setAttending(true)}
-                >
-                  <div className="option-emoji">🥳</div>
-                  <div className="option-title option-title-yes">Mình sẽ đến chụp chung với chị Thúy An nha!!</div>
-                  <div className="option-desc">ok iu iu moa moa!</div>
-                </div>
-
-                {/* Lựa chọn KHÔNG tham gia */}
-                <div
-                  className={`rsvp-option-card ${!attending ? 'selected-no' : ''}`}
-                  onClick={() => setAttending(false)}
-                >
-                  <div className="option-emoji">😢</div>
-                  <div className="option-title option-title-no">Tui bận mất tiu òi!</div>
-                  <div className="option-desc">Thoai không sao, nhưng nhớ gửi quà cho mình sau nhé hẹ hẹ.!</div>
-                </div>
-
-              </div>
-            </div>
-
-            {/* Lời chúc gửi kèm */}
-            <div className="form-group">
-              <label htmlFor="guest-msg" className="form-label">Bạn có gì muốn nhắn gửi đến mình hông?</label>
-              <textarea
-                id="guest-msg"
-                className="form-input"
-                style={{ minHeight: '80px', resize: 'vertical' }}
-                placeholder="Gửi lời chúc mừng hoặc lời nhắn tại đây..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-              />
-            </div>
-
-            {/* Nút gửi */}
-            <button
-              type="submit"
-              className="bubbly-button"
-              disabled={isSubmitting || !name.trim()}
+            <a
+              href="https://maps.app.goo.gl/kXRjjmeCvNZV8CaY8"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="map-button-link"
             >
-              {isSubmitting ? 'Đang gửi phản hồi...' : 'Gửi xác nhận của bạn'}
-            </button>
-          </form>
+              <span>🗺️</span> Chỉ đường trên Google Maps
+            </a>
+          </div>
+          <div>
 
-          {/* DANH SÁCH KHÁCH MỜI ĐÃ XÁC NHẬN (Chỉ hiển thị cho Admin khi truy cập qua link bí mật ?admin=true) */}
-          {isAdmin && (
-            <div className="guest-list-section">
-              <h3 className="guest-list-title">
-                👥 Những người bạn đã gửi phản hồi ({rsvps.length})
-              </h3>
-
-              <div className="guest-cards-container">
-                {rsvps.length === 0 ? (
-                  <p style={{ color: 'var(--light-text)', fontSize: '0.9rem', gridColumn: '1 / -1', textAlign: 'center' }}>
-                    Chưa có ai gửi xác nhận. Hãy là người đầu tiên!
-                  </p>
-                ) : (
-                  rsvps.map((guest) => (
-                    <div key={guest.id} className="guest-card">
-                      <div className="guest-card-header">
-                        <div className="guest-name" title={guest.name}>{guest.name}</div>
-                        <span className={`guest-badge ${guest.attending ? 'badge-yes' : 'badge-no'}`}>
-                          {guest.attending ? 'Sẽ tham gia' : 'Vắng mặt'}
-                        </span>
-                      </div>
-                      {guest.message && <div className="guest-message">"{guest.message}"</div>}
-                      <span className="guest-time">
-                        {new Date(guest.created_at).toLocaleDateString('vi-VN', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          day: '2-digit',
-                          month: '2-digit'
-                        })}
-                      </span>
-                    </div>
-                  ))
-                )}
+            <div className="section-card bento-campus" id="ban-do-khuon-vien" style={{ marginBottom: '15px' }}>
+              <h2 className="section-title">
+                {/* Icon Sơ đồ */}
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon><line x1="9" y1="3" x2="9" y2="18"></line><line x1="15" y1="6" x2="15" y2="21"></line></svg>
+                Sơ đồ Khuôn viên HCMUE
+              </h2>
+              <p style={{ textAlign: 'left', marginBottom: '5px' }}>
+                Sơ đồ khuôn viên HCMUE:
+                Tòa nhà thư viện sẽ là nơi làm lễ. Sau khi làm lễ xong, mời các bạn di chuyển đến sân M (ngay trước tòa nhà thư viện) để chụp hình cùng mình nha! (Các bạn có thể xem thêm ở sơ đồ để dễ hình dung hơn nhaaaaa)
+              </p>
+              <div className="campus-map-container">
+                <img
+                  src="/dichuyen.jpg"
+                  alt="Sơ đồ khuôn viên HCMUE"
+                  className="campus-map-img"
+                />
               </div>
             </div>
-          )}
-        </div>
+            <div className="section-card bento-contact" id="lien-he">
+              <h2 className="section-title">
+                {/* Icon Điện thoại */}
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                Thông tin liên lạc
+              </h2>
 
+              <p style={{ textAlign: 'left', marginBottom: '15px', color: 'var(--light-text)' }}>
+                Nếu bạn có câu hỏi hoặc cần hỗ trợ thêm thông tin gì, đừng ngần ngại liên lạc với Thúy An qua:
+              </p>
 
-        {/* =========================================================================
-              MỤC 6: THÔNG TIN LIÊN LẠC CỦA CHỦ TIỆC
-             ========================================================================= */}
-        <div className="section-card" id="lien-he">
-          <h2 className="section-title">
-            {/* Icon Điện thoại */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-            Thông tin liên lạc
-          </h2>
-
-          <p style={{ textAlign: 'left', marginBottom: '15px', color: 'var(--light-text)' }}>
-            Nếu bạn có câu hỏi hoặc cần hỗ trợ thêm thông tin gì, đừng ngần ngại liên lạc với Thúy An qua:
-          </p>
-
-          <div className="contacts-grid">
-            {/* =========================================================================
+              <div className="contacts-grid">
+                {/* =========================================================================
                   CHỈNH SỬA: SỐ ĐIỆN THOẠI
                   Thay đổi tel: số điện thoại và số hiển thị bên dưới
                  ========================================================================= */}
-            <a href="tel:0982962655" className="contact-link-card">
-              <div className="contact-icon-wrapper">📞</div>
-              <div className="contact-info-text">
-                <span className="contact-title">Điện thoại</span>
-                <span className="contact-value">0325395352</span>
-              </div>
-            </a>
+                <a href="tel:0982962655" className="contact-link-card">
+                  <div className="contact-icon-wrapper">📞</div>
+                  <div className="contact-info-text">
+                    <span className="contact-title">Điện thoại</span>
+                    <span className="contact-value">0325395352</span>
+                  </div>
+                </a>
 
-            {/* =========================================================================
+                {/* =========================================================================
                   CHỈNH SỬA: TRANG CÁ NHÂN FACEBOOK / MESSENGER
                   Thay đổi href thành link Facebook của bạn
                  ========================================================================= */}
-            <a
-              href="https://www.facebook.com/nthuyan.1402"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="contact-link-card"
-              style={{ gridColumn: '1 / -1' }}
-            >
-              <div className="contact-icon-wrapper">💬</div>
-              <div className="contact-info-text">
-                <span className="contact-title">Facebook</span>
-                <span className="contact-value">fb.com/nthuyan</span>
+                <a
+                  href="https://www.facebook.com/nthuyan.1402"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="contact-link-card"
+                  style={{ gridColumn: '1 / -1' }}
+                >
+                  <div className="contact-icon-wrapper">💬</div>
+                  <div className="contact-info-text">
+                    <span className="contact-title">Facebook</span>
+                    <span className="contact-value">fb.com/nthuyan</span>
+                  </div>
+                </a>
               </div>
-            </a>
+            </div>
           </div>
+
+          <div className="section-card bento-parking" id="gui-xe">
+            <h2 className="section-title">
+              {/* Icon Xe hơi/Xe máy */}
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2" ry="2"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+              Hướng dẫn gửi xe
+            </h2>
+            <div className="campus-map-container" style={{ marginBottom: '15px' }}>
+              <img
+                src="/guixe.jpg"
+                alt="Sơ đồ khuôn viên HCMUE"
+                className="campus-map-img"
+              />
+            </div>
+            {/* =========================================================================
+                CHỈNH SỬA: CÁC BƯỚC HƯỚNG DẪN GỬI XE
+                Thay đổi hoặc thêm bớt các bước bên dưới tùy tình hình thực tế
+               ========================================================================= */}
+            <ul className="parking-steps">
+              <li className="parking-step-item">
+                <div className="parking-step-num">1</div>
+                <div className="parking-step-text">
+                  <strong>Bãi gửi xe:</strong> Nếu bạn đi từ Cổng chính (Đường An Dương Vương), hãy rẽ trái chạy men theo đường nội bộ phía trước nhà A. Nếu đi từ Cổng phụ phía bên trái, bạn chỉ cần chạy thẳng vào đường nội bộ. Bãi xe gắn máy nằm ngay bên tay phải của bạn.
+                </div>
+              </li>
+              <li className="parking-step-item">
+                <div className="parking-step-num">2</div>
+                <div className="parking-step-text">
+                  <strong>Lấy thẻ xe:</strong> Tại lối vào bãi xe, dù bạn là sinh viên trong trường hay khách ngoài trường thì đều cần dừng lại để lấy thẻ xe từ các bác bảo vệ nhé.
+                </div>
+              </li>
+              <li className="parking-step-item">
+                <div className="parking-step-num">3</div>
+                <div className="parking-step-text">
+                  <strong>Chi phí gửi xe:</strong> Chi phí gửi xe sẽ dao động từ 3k đến 6k tùy thuộc vào khung giờ và đối tượng. Bạn nên chuẩn bị sẵn một ít tiền lẻ để lúc lấy xe ra về được thuận tiện và nhanh chóng hơn.
+                </div>
+              </li>
+              <li className="parking-step-item">
+                <div className="parking-step-num">4</div>
+                <div className="parking-step-text">
+                  <strong>Lưu ý:</strong> Sau khi gửi xe xong, bạn đi bộ ra phía sau để đến khu vực làm lễ hoặc check-in trước. Hãy nhắn tin hoặc gọi điện liền cho An để mình biết và ra đón bạn nếu mình đã làm lễ xong nhé!.
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div className="section-card bento-rsvp" id="xac-nhan">
+            <h2 className="section-title">
+              {/* Icon Thư xác nhận */}
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+              Xác nhận tham dự
+            </h2>
+
+            <p style={{ textAlign: 'left', marginBottom: '20px', color: 'var(--light-text)' }}>
+              Hãy phản hồi giúp mình trước ngày <strong>22h00 22/07/2026</strong> để mình chuẩn bị đón tiếp chu đáo nhất nhé!
+            </p>
+
+            <form onSubmit={handleSubmitRSVP} className="rsvp-form-container">
+              {/* Nhập Họ và tên */}
+              <div className="form-group">
+                <label htmlFor="guest-name" className="form-label">Cho mình xin bí danh nha! (viết sao cho mình biết là ai á...)*</label>
+                <input
+                  type="text"
+                  id="guest-name"
+                  className="form-input"
+                  placeholder="Nhập họ và tên của bạn..."
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Câu hỏi lựa chọn Có/Không */}
+              <div className="form-group">
+                <label className="form-label">Bạn sẽ đến và chụp cùng mình tấm ảnh chứ?</label>
+                <div className="rsvp-options-grid">
+
+                  {/* Lựa chọn CÓ tham gia */}
+                  <div
+                    className={`rsvp-option-card ${attending ? 'selected-yes' : ''}`}
+                    onClick={() => setAttending(true)}
+                  >
+                    <div className="option-emoji">🥳</div>
+                    <div className="option-title option-title-yes">Mình sẽ đến chụp chung với chị Thúy An nha!!</div>
+                    <div className="option-desc">ok iu iu moa moa!</div>
+                  </div>
+
+                  {/* Lựa chọn KHÔNG tham gia */}
+                  <div
+                    className={`rsvp-option-card ${!attending ? 'selected-no' : ''}`}
+                    onClick={() => setAttending(false)}
+                  >
+                    <div className="option-emoji">😢</div>
+                    <div className="option-title option-title-no">Tui bận mất tiu òi!</div>
+                    <div className="option-desc">Thoai không sao, nhưng nhớ gửi quà cho mình sau nhé hẹ hẹ.!</div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Lời chúc gửi kèm */}
+              <div className="form-group">
+                <label htmlFor="guest-msg" className="form-label">Bạn có gì muốn nhắn gửi đến mình hông?</label>
+                <textarea
+                  id="guest-msg"
+                  className="form-input"
+                  style={{ minHeight: '80px', resize: 'vertical' }}
+                  placeholder="Gửi lời chúc mừng hoặc lời nhắn tại đây..."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                />
+              </div>
+
+              {/* Nút gửi */}
+              <button
+                type="submit"
+                className="bubbly-button"
+                disabled={isSubmitting || !name.trim()}
+              >
+                {isSubmitting ? 'Đang gửi phản hồi...' : 'Gửi xác nhận của bạn'}
+              </button>
+            </form>
+
+            {/* DANH SÁCH KHÁCH MỜI ĐÃ XÁC NHẬN (Chỉ hiển thị cho Admin khi truy cập qua link bí mật ?admin=true) */}
+            {isAdmin && !isAdminAuthenticated ? (
+              <div className="admin-login-card">
+                <h3 className="admin-login-title">🔐 Khu vực quản trị</h3>
+                <p className="admin-login-copy">Nhập mật khẩu để xem danh sách phản hồi của các bạn thân 🐾</p>
+                <form onSubmit={handleAdminLogin} className="admin-login-form">
+                  <input
+                    type="password"
+                    className="form-input"
+                    placeholder="Nhập mật khẩu"
+                    value={adminPasswordInput}
+                    onChange={(e) => setAdminPasswordInput(e.target.value)}
+                  />
+                  {adminLoginError && <p className="admin-login-error">{adminLoginError}</p>}
+                  <button type="submit" className="admin-login-button">
+                    Mở khóa
+                  </button>
+                </form>
+              </div>
+            ) : null}
+
+            {isAdmin && isAdminAuthenticated && (
+              <div className="guest-list-section">
+                <h3 className="guest-list-title">
+                  👥 Những người bạn đã gửi phản hồi ({rsvps.length})
+                </h3>
+
+                <div className="guest-cards-container">
+                  {rsvps.length === 0 ? (
+                    <p style={{ color: 'var(--light-text)', fontSize: '0.9rem', gridColumn: '1 / -1', textAlign: 'center' }}>
+                      Chưa có ai gửi xác nhận. Hãy là người đầu tiên!
+                    </p>
+                  ) : (
+                    rsvps.map((guest) => (
+                      <div key={guest.id} className="guest-card">
+                        <div className="guest-card-header">
+                          <div className="guest-name" title={guest.name}>{guest.name}</div>
+                          <span className={`guest-badge ${guest.attending ? 'badge-yes' : 'badge-no'}`}>
+                            {guest.attending ? 'Sẽ tham gia' : 'Vắng mặt'}
+                          </span>
+                        </div>
+                        {guest.message && <div className="guest-message">"{guest.message}"</div>}
+                        <span className="guest-time">
+                          {new Date(guest.created_at).toLocaleDateString('vi-VN', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            day: '2-digit',
+                            month: '2-digit'
+                          })}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
         </div>
 
       </div>
